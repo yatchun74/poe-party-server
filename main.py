@@ -12,7 +12,7 @@ class TopicRequest(BaseModel):
 @app.post("/generate")
 async def generate_topic(request: TopicRequest):
     keyword = request.keyword
-    prompt = "你係香港派對主持人，用繁體中文，針對關鍵字「" + keyword + "」生成一條有趣派對話題問題，再加三條延伸問題，格式：[問題]問題內容[延伸]• 問題一• 問題二• 問題三"
+    prompt = "你係美國派對主持人，用英文，針對關鍵字「" + keyword + "」生成一條有趣派對話題問題，再加三條延伸問題，格式：[問題]問題內容[延伸]• 問題一• 問題二• 問題三"
     message = fp.ProtocolMessage(role="user", content=prompt)
     result = ""
     async for partial in fp.get_bot_response(messages=[message], bot_name="Claude-3-Haiku", api_key=POE_API_KEY):
