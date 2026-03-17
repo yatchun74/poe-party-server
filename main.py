@@ -14,7 +14,7 @@ class TopicRequest(BaseModel):
 @app.post("/generate")
 async def generate_topic(request: TopicRequest):
     keyword = request.keyword
-    
+
     prompt = (
         "你係一個香港派對主持人。\n"
         "用家輸入咗關鍵字「" + keyword + "」。\n\n"
@@ -27,9 +27,9 @@ async def generate_topic(request: TopicRequest):
         "• 延伸問題三\n\n"
         "只返回以上格式，不需要其他說明。"
     )
-    
+
     message = fp.ProtocolMessage(role="user", content=prompt)
-    
+
     full_response = ""
     async for partial in fp.get_bot_response(
         messages=[message],
@@ -37,15 +37,15 @@ async def generate_topic(request: TopicRequest):
         api_key=POE_API_KEY
     ):
         full_response += partial.text
-    
-    lines = full_response.strip().split("\n")
+
+    lines = full_response.strip().splitlines()
     lines = [l.strip() for l in lines if l.strip()]
-    
+
     main_question = ""
     follow_ups = []
     in_question = False
     in_follow_up = False
-    
+
     for line in lines:
         if "[問題]" in line:
             in_question = True
@@ -55,21 +55,11 @@ async def generate_topic(request: TopicRequest):
             in_follow_up = True
         elif in_question and not line.startswith("
 
----
-
-## 步驟
-
-1. 去 **GitHub** → 你的 `poe-party-server` repo
-2. 打開 `main.py`
-3. 按右上角 **鉛筆圖示（Edit）**
-4. 將全部內容刪除
-5. 貼上上面完整代碼
-6. 按 **「Commit changes」**
-7. Railway 會自動重新部署（約2分鐘）
-8. 再試 app
+6. 撳底部 **「Commit changes」** 按鈕
 
 ---
 
-**問題原因：** 原本 `main.py` 入面用咗：
-```python
-lines = full_response.strip().split("
+### 2. 確認 Railway 自動重新部署
+
+Commit 之後 Railway 會自動偵測更新，約等 **2-3 分鐘**，再去 Railway Logs 確認見到：
+
