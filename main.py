@@ -1,11 +1,9 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import fastapi_poe as fp
-import asyncio
 import os
 
 app = FastAPI()
-
 POE_API_KEY = os.environ.get("POE_API_KEY", "")
 
 class TopicRequest(BaseModel):
@@ -14,52 +12,16 @@ class TopicRequest(BaseModel):
 @app.post("/generate")
 async def generate_topic(request: TopicRequest):
     keyword = request.keyword
-
-    prompt = (
-        "你係一個香港派對主持人。\n"
-        "用家輸入咗關鍵字「" + keyword + "」。\n\n"
-        "請用以下格式回覆（繁體中文）：\n\n"
-        "[問題]\n"
-        "一條有趣嘅派對話題問題，同關鍵字有關，20-40字。\n\n"
-        "[延伸]\n"
-        "• 延伸問題一\n"
-        "• 延伸問題二\n"
-        "• 延伸問題三\n\n"
-        "只返回以上格式，不需要其他說明。"
-    )
-
+    prompt = "你係香港派對主持人，用繁體中文，針對關鍵字「" + keyword + "」生成一條有趣派對話題問題，再加三條延伸問題，格式：[問題]問題內容[延伸]• 問題一• 問題二• 問題三"
     message = fp.ProtocolMessage(role="user", content=prompt)
+    result = ""
+    async for partial in fp.get_bot_response(messages=[message], bot_name="Claude-3-Haiku", api_key=POE_API_KEY):
+        result += partial.text
+    parts = result.split("[延伸]")
+    main_q = parts[0].replace("[問題]", "").strip() if parts else result
+    follow = parts[1].strip() if len(parts) > 1 else "• 大家有冇類似經歷？\n• 你會點處理？\n• 有冇唔同睇法？"
+    return {"success": True, "mainQuestion": main_q, "followUpQuestions": follow}
 
-    full_response = ""
-    async for partial in fp.get_bot_response(
-        messages=[message],
-        bot_name="Claude-3-Haiku",
-        api_key=POE_API_KEY
-    ):
-        full_response += partial.text
-
-    lines = full_response.strip().splitlines()
-    lines = [l.strip() for l in lines if l.strip()]
-
-    main_question = ""
-    follow_ups = []
-    in_question = False
-    in_follow_up = False
-
-    for line in lines:
-        if "[問題]" in line:
-            in_question = True
-            in_follow_up = False
-        elif "[延伸]" in line:
-            in_question = False
-            in_follow_up = True
-        elif in_question and not line.startswith("
-
-6. 撳底部 **「Commit changes」** 按鈕
-
----
-
-### 2. 確認 Railway 自動重新部署
-
-Commit 之後 Railway 會自動偵測更新，約等 **2-3 分鐘**，再去 Railway Logs 確認見到：
-
+@app.get("/")
+def health_check():
+    return {"status": "ok"}
